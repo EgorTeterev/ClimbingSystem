@@ -136,5 +136,10 @@ void AClimbingSystemCharacter::Look(const FInputActionValue& Value)
 
 void AClimbingSystemCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 {
+	UCustomMovementComponent* Component = GetCustomMovementComponent();
+
+//	Component->TraceClimbableSurfaces();
+
+
 	Debug::Print(TEXT("Climb action started"));
 }
