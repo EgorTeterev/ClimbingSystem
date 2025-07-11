@@ -2,12 +2,14 @@
 
 
 #include "Components/CustomMovementComponent.h"
+#include "ClimbingSystem/ClimbingSystemCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     TraceClimbableSurfaces();
+    TraceFromEyeHeight(100.f);
 }
 
 
@@ -18,6 +20,17 @@ void UCustomMovementComponent::TraceClimbableSurfaces()
     const FVector End = Start + UpdatedComponent->GetForwardVector();
 
     DoCapsuleTraceMultiByObject(Start, End,true);
+}
+
+void UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset)
+{
+    const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
+    const FVector EyeHeightOffset = UpdatedComponent->GetUpVector() * (CharacterOwner->BaseEyeHeight + TraceStartOffset);
+    
+    const FVector Start = ComponentLocation + EyeHeightOffset;
+    const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance; 
+    
+    DoLineTraceSingleByObject(Start, End, true);
 }
 
 TArray<FHitResult> UCustomMovementComponent::DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug)

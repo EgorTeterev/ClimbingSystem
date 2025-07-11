@@ -14,6 +14,7 @@ class CLIMBINGSYSTEM_API UCustomMovementComponent : public UCharacterMovementCom
 	
 public:
 	void TraceClimbableSurfaces();
+	void TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f);
 
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
