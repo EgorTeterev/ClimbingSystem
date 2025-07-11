@@ -6,6 +6,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomMovementComponent.generated.h"
 
+UENUM(BlueprintType)
+namespace ECustomMovementMode
+{
+	enum Type
+	{
+		Move_Climb UMETA(DisplayName = "Climb Mode")
+	};
+}
+
 
 UCLASS()
 class CLIMBINGSYSTEM_API UCustomMovementComponent : public UCharacterMovementComponent
@@ -13,23 +22,32 @@ class CLIMBINGSYSTEM_API UCustomMovementComponent : public UCharacterMovementCom
 	GENERATED_BODY()
 	
 public:
-	void TraceClimbableSurfaces();
-	void TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f);
+//interface for Climbing
+	bool TraceClimbableSurfaces();
+	FHitResult TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f);
+	void ToggleClimb(bool bEnableClimb);
+	bool IsClimbing() const;
 
 protected:
+	//Traces params
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float CapsuleTraceRadius;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float CapsuleTraceHalfHeight;
 
+	//Trace Querry types of surfaces 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> SurfaceTraceTypes;
 
+	//Traced Surfaces container
+	TArray<FHitResult> ClimbableSurfaces;
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false);
-	FHitResult DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug = false);
+	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false,bool bDrawPersistentShape = false);
+	FHitResult DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug = false, bool bDrawPersistentShape = false);
+	bool CanStartClimbing();
+
 };

@@ -89,6 +89,8 @@ void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* Player
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AClimbingSystemCharacter::Look);
+		
+		// Start Climbing
 		EnhancedInputComponent->BindAction(ClimbAction, ETriggerEvent::Started, this, &AClimbingSystemCharacter::OnClimbActionStarted);
 
 	}
@@ -136,10 +138,16 @@ void AClimbingSystemCharacter::Look(const FInputActionValue& Value)
 
 void AClimbingSystemCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 {
-	UCustomMovementComponent* Component = GetCustomMovementComponent();
+	UCustomMovementComponent* CustomMC = GetCustomMovementComponent();
+	
+	if (!CustomMC->IsClimbing())
+	{
+		CustomMC->ToggleClimb(true);
+	}
+	else
+	{
+		CustomMC->ToggleClimb(false); //cancel Climbing
+	}
 
-//	Component->TraceClimbableSurfaces();
 
-
-	Debug::Print(TEXT("Climb action started"));
 }

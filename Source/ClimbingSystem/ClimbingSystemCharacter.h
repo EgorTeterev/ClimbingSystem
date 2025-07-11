@@ -60,8 +60,6 @@ private:
 
 	void OnClimbActionStarted(const FInputActionValue& Value);
 
-
-
 protected:
 
 	/** Called for movement input */
