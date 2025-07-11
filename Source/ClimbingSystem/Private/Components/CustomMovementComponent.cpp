@@ -4,6 +4,7 @@
 #include "Components/CustomMovementComponent.h"
 #include "ClimbingSystem/ClimbingSystemCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/CapsuleComponent.h"
 #include "ClimbingSystem/DebugHelper.h"
 
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -112,6 +113,37 @@ bool UCustomMovementComponent::CanStartClimbing()
     return true;
 }
 
+void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
+{
+    if (IsClimbing())
+    {
+        bOrientRotationToMovement = false;
+        CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);// character collision takes smaller space while Climbing
+    }
+
+    if (PreviousMovementMode == MOVE_Custom && PreviousMovementMode == EMovementMode::MOVE_Custom)
+    {
+        bOrientRotationToMovement = true;
+        CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);//character collision takse normal size after Climbing end
+
+        StopMovementImmediately();
+    }
+
+    Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+
+}
+
+void UCustomMovementComponent::StartClimbing()
+{
+    SetMovementMode(EMovementMode::MOVE_Custom, ECustomMovementMode::Move_Climb);
+}
+
+void UCustomMovementComponent::StopClimbing()
+{
+    SetMovementMode(EMovementMode::MOVE_Falling);
+
+}
+
 bool UCustomMovementComponent::IsClimbing() const
 {
     return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::Move_Climb;
@@ -124,16 +156,12 @@ void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)
     {
         if (CanStartClimbing())
         {
-            Debug::Print(TEXT("Can Start Climbing"));
-        }
-        else
-        {
-            Debug::Print(TEXT("Cant Climb"));
+            StartClimbing();
         }
     }
     else
     {
-        Debug::Print(TEXT("Climb Canceled"));
+        StopClimbing();
     }
 }
 
