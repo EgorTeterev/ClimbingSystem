@@ -31,10 +31,13 @@ public:
 protected:
 	//Traces params
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
-	float CapsuleTraceRadius;
+	float CapsuleTraceRadius = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
-	float CapsuleTraceHalfHeight;
+	float CapsuleTraceHalfHeight = 72.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxBreakClimbDeceleration = 400.f;
 
 	//Trace Querry types of surfaces 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
@@ -44,6 +47,8 @@ protected:
 	TArray<FHitResult> ClimbableSurfaces;
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 
 private:
 	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false,bool bDrawPersistentShape = false);
@@ -51,5 +56,5 @@ private:
 	bool CanStartClimbing();
 	void StartClimbing();
 	void StopClimbing();
-	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	void HandleClimbPhys(float deltaTime, int32 Iterations);
 };

@@ -96,7 +96,6 @@ FHitResult UCustomMovementComponent::DoLineTraceSingleByObject(const FVector& St
     return Result;
 }
 
-
 bool UCustomMovementComponent::CanStartClimbing()
 {
     // Character cant climb if he is falling, or find out, that there is no surfaces to climb
@@ -149,6 +148,59 @@ bool UCustomMovementComponent::IsClimbing() const
     return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::Move_Climb;
 }
 
+
+void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
+{
+    if (IsClimbing())
+    {
+        HandleClimbPhys(deltaTime, Iterations);
+    }
+
+    Super::PhysCustom(deltaTime, Iterations);
+}
+
+void UCustomMovementComponent::HandleClimbPhys(float deltaTime, int32 Iterations)
+{
+    if (deltaTime < MIN_TICK_TIME)
+    {
+        return;
+    }
+
+    //Process all climbing surfaces
+
+    //Chack if we should stop Climbing
+
+    RestorePreAdditiveRootMotionVelocity();
+
+    if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
+    {
+        //Define max Climb speed and acceleration
+        CalcVelocity(deltaTime, 0.f, true, GetMaxBrakingDeceleration());
+    }
+
+    ApplyRootMotionToVelocity(deltaTime);
+
+    FVector OldLocation = UpdatedComponent->GetComponentLocation();
+    const FVector Adjusted = Velocity * deltaTime;
+    FHitResult Hit(1.f);
+
+    //Handle Climb Rotation
+    SafeMoveUpdatedComponent(Adjusted, UpdatedComponent->GetComponentQuat(), true, Hit);
+
+    if (Hit.Time < 1.f)
+    {
+        HandleImpact(Hit, deltaTime, Adjusted);
+        SlideAlongSurface(Adjusted, (1.f - Hit.Time), Hit.Normal, Hit, true);
+    }
+
+    if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
+    {
+        Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / deltaTime;
+    }
+
+    //Snap movement to climable surfaces
+
+}
 
 void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)
 {
