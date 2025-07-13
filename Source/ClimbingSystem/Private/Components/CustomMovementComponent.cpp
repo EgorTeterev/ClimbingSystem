@@ -12,6 +12,7 @@ void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick Ti
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     //TraceClimbableSurfaces();
     //TraceFromEyeHeight(100.f);
+    //SnapMovementToClimableSurfaces(DeltaTime);
 }
 
 //public functions to use
@@ -21,7 +22,7 @@ bool UCustomMovementComponent::TraceClimbableSurfaces()
     const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
     const FVector End = Start + UpdatedComponent->GetForwardVector();
 
-    ClimbableSurfaces = DoCapsuleTraceMultiByObject(Start, End,true,true);
+    ClimbableSurfaces = DoCapsuleTraceMultiByObject(Start, End,true);
     
     return !ClimbableSurfaces.IsEmpty();
 }
@@ -34,7 +35,7 @@ FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, flo
     const FVector Start = ComponentLocation + EyeHeightOffset;
     const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance; 
     
-    return DoLineTraceSingleByObject(Start, End, true,true);
+    return DoLineTraceSingleByObject(Start, End);
 }
 
 //private trace functions
@@ -125,6 +126,12 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
         bOrientRotationToMovement = true;
         CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);//character collision takse normal size after Climbing end
 
+        //??????????
+        const FRotator DirtyRotation = UpdatedComponent->GetComponentRotation();
+        const FRotator CleanStandRotation = FRotator(0.0f, DirtyRotation.Yaw, 0.f);
+        UpdatedComponent->SetRelativeRotation(CleanStandRotation);
+        // 
+
         StopMovementImmediately();
     }
 
@@ -149,57 +156,152 @@ bool UCustomMovementComponent::IsClimbing() const
 }
 
 
-void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
+void UCustomMovementComponent::PhysCustom(float DeltaTime, int32 Iterations)
 {
     if (IsClimbing())
     {
-        HandleClimbPhys(deltaTime, Iterations);
+        HandleClimbPhys(DeltaTime, Iterations);
     }
 
-    Super::PhysCustom(deltaTime, Iterations);
+    Super::PhysCustom(DeltaTime, Iterations);
 }
 
-void UCustomMovementComponent::HandleClimbPhys(float deltaTime, int32 Iterations)
+float UCustomMovementComponent::GetMaxSpeed() const
 {
-    if (deltaTime < MIN_TICK_TIME)
+    if (IsClimbing())
+    {
+        return MaxClimbSpeed;
+    }
+    else
+    {
+        return Super::GetMaxSpeed();
+    }
+}
+
+float UCustomMovementComponent::GetMaxAcceleration() const
+{
+    if (IsClimbing())
+    {
+        return MaxClimbAcceleration;
+    }
+    else
+    {
+        return Super::GetMaxAcceleration();
+    }
+}
+
+
+void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations)
+{
+    if (DeltaTime < MIN_TICK_TIME)
     {
         return;
     }
 
     //Process all climbing surfaces
+    TraceClimbableSurfaces();
+    ProcessClimableSurfaceInfo();
 
     //Chack if we should stop Climbing
+    if (ShouldStopClimbing())
+    {
+        StopClimbing();
+    }
 
     RestorePreAdditiveRootMotionVelocity();
 
     if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
     {
         //Define max Climb speed and acceleration
-        CalcVelocity(deltaTime, 0.f, true, GetMaxBrakingDeceleration());
+        CalcVelocity(DeltaTime, 0.f, true, GetMaxBrakingDeceleration());
     }
 
-    ApplyRootMotionToVelocity(deltaTime);
+    ApplyRootMotionToVelocity(DeltaTime);
 
     FVector OldLocation = UpdatedComponent->GetComponentLocation();
-    const FVector Adjusted = Velocity * deltaTime;
+    const FVector Adjusted = Velocity * DeltaTime;
     FHitResult Hit(1.f);
 
     //Handle Climb Rotation
-    SafeMoveUpdatedComponent(Adjusted, UpdatedComponent->GetComponentQuat(), true, Hit);
+    SafeMoveUpdatedComponent(Adjusted, GetClimbRotation(DeltaTime), true, Hit);
 
     if (Hit.Time < 1.f)
     {
-        HandleImpact(Hit, deltaTime, Adjusted);
+        HandleImpact(Hit, DeltaTime, Adjusted);
         SlideAlongSurface(Adjusted, (1.f - Hit.Time), Hit.Normal, Hit, true);
     }
 
     if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
     {
-        Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / deltaTime;
+        Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / DeltaTime;
     }
 
     //Snap movement to climable surfaces
+    SnapMovementToClimableSurfaces(DeltaTime);
 
+}
+
+void UCustomMovementComponent::ProcessClimableSurfaceInfo()
+{
+    CurrentClimableSurfaceLocation = FVector::ZeroVector;
+    CurrentClimableSurfaceNormal = FVector::ZeroVector;
+
+    if (!ClimbableSurfaces.IsEmpty())
+    {
+        for (const FHitResult& SurfaceHit : ClimbableSurfaces)
+        {
+            CurrentClimableSurfaceLocation += SurfaceHit.ImpactPoint;
+            CurrentClimableSurfaceNormal += SurfaceHit.ImpactNormal;
+        }
+        CurrentClimableSurfaceLocation /= ClimbableSurfaces.Num(); // Get avaragge location to snap between different surfaces.
+        CurrentClimableSurfaceNormal = CurrentClimableSurfaceNormal.GetSafeNormal();
+    }
+}
+
+FQuat UCustomMovementComponent::GetClimbRotation(float DeltaTime)
+{
+    const FQuat CurrentQuat = UpdatedComponent->GetComponentQuat();
+
+    if (HasAnimRootMotion() ||CurrentRootMotion.HasOverrideVelocity())
+    {
+        return CurrentQuat;
+    }
+
+    const FQuat TargetQuat = FRotationMatrix::MakeFromX(-CurrentClimableSurfaceNormal).ToQuat();
+
+    return FMath::QInterpTo(CurrentQuat, TargetQuat, DeltaTime,5.f);
+
+}
+
+void UCustomMovementComponent::SnapMovementToClimableSurfaces(float DeltaTime)
+{
+    const FVector ConmponentForward = UpdatedComponent->GetForwardVector();
+    const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
+
+    const FVector ProjectCharacterToSurface = (CurrentClimableSurfaceLocation - ComponentLocation).ProjectOnTo(ConmponentForward);
+    DrawDebugLine(GetWorld(), ComponentLocation, ProjectCharacterToSurface, FColor::Purple, true);
+
+    const FVector SnapVector = -CurrentClimableSurfaceNormal * ProjectCharacterToSurface.Length();
+
+    UpdatedComponent->MoveComponent(SnapVector * DeltaTime * MaxClimbSpeed,UpdatedComponent->GetComponentQuat(),true);
+}
+
+bool UCustomMovementComponent::ShouldStopClimbing() const
+{
+    if (ClimbableSurfaces.IsEmpty())
+    {
+        return true;
+    }
+
+    const float DotProduct = FVector::DotProduct(FVector::UpVector, CurrentClimableSurfaceNormal);
+    const float DegreeDifference = FMath::RadiansToDegrees(FMath::Acos(DotProduct));
+
+    if (DegreeDifference < 30.f)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)

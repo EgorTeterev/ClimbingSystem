@@ -39,6 +39,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float MaxBreakClimbDeceleration = 400.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxClimbAcceleration = 40.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxClimbSpeed = 100.f;
+
+
 	//Trace Querry types of surfaces 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> SurfaceTraceTypes;
@@ -46,9 +53,18 @@ protected:
 	//Traced Surfaces container
 	TArray<FHitResult> ClimbableSurfaces;
 
+
+	FVector CurrentClimableSurfaceLocation;
+	FVector CurrentClimableSurfaceNormal;
+
+
+	//Overriden CharacterMovementComponent interface
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+	virtual float GetMaxSpeed() const override;
+	virtual float GetMaxAcceleration() const override;
+
 
 private:
 	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false,bool bDrawPersistentShape = false);
@@ -56,5 +72,14 @@ private:
 	bool CanStartClimbing();
 	void StartClimbing();
 	void StopClimbing();
-	void HandleClimbPhys(float deltaTime, int32 Iterations);
+	void HandleClimbPhys(float DeltaTime, int32 Iterations);
+	void ProcessClimableSurfaceInfo();
+	FQuat GetClimbRotation(float DeltaTime);
+	void SnapMovementToClimableSurfaces(float DeltaTime);
+	bool ShouldStopClimbing() const;
+
+public:
+	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
+
+	
 };

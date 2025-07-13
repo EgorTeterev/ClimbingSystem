@@ -36,7 +36,7 @@ private:
 	UCameraComponent* FollowCamera;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCustomMovementComponent* MovementComponent;
+	UCustomMovementComponent* CustomMovementComponent;
 
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -62,6 +62,9 @@ private:
 
 protected:
 
+	void HandleGroundMovement(const FInputActionValue& Value);
+	void HandleClimbMovement(const FInputActionValue& Value);
+
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -80,6 +83,6 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE UCustomMovementComponent* GetCustomMovementComponent() const { return MovementComponent; }
+	FORCEINLINE UCustomMovementComponent* GetCustomMovementComponent() const { return CustomMovementComponent; }
 };
 

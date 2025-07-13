@@ -28,7 +28,7 @@ AClimbingSystemCharacter::AClimbingSystemCharacter(const FObjectInitializer& Obj
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-	MovementComponent = Cast<UCustomMovementComponent>(GetMovementComponent());
+	CustomMovementComponent = Cast<UCustomMovementComponent>(GetMovementComponent());
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -102,8 +102,26 @@ void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* Player
 
 void AClimbingSystemCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (!CustomMovementComponent)
+	{
+		return;
+	}
+
+	if (CustomMovementComponent->IsClimbing())
+	{
+		HandleClimbMovement(Value);
+	}
+	else
+	{
+		HandleGroundMovement(Value);
+	}
+
+}
+
+void AClimbingSystemCharacter::HandleGroundMovement(const FInputActionValue& Value)
+{
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -113,7 +131,7 @@ void AClimbingSystemCharacter::Move(const FInputActionValue& Value)
 
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
+
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
@@ -122,6 +140,21 @@ void AClimbingSystemCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
+
+void AClimbingSystemCharacter::HandleClimbMovement(const FInputActionValue& Value)
+{
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	const FVector ForwardDirection = FVector::CrossProduct(-CustomMovementComponent->GetClimableSurfaceNormal(), GetActorRightVector());
+
+	const FVector RightDirection = FVector::CrossProduct(-CustomMovementComponent->GetClimableSurfaceNormal(), -GetActorUpVector());
+
+	// add movement 
+	AddMovementInput(ForwardDirection, MovementVector.Y);
+	AddMovementInput(RightDirection, MovementVector.X);
+
+}
+
 
 void AClimbingSystemCharacter::Look(const FInputActionValue& Value)
 {
@@ -151,3 +184,4 @@ void AClimbingSystemCharacter::OnClimbActionStarted(const FInputActionValue& Val
 
 
 }
+
