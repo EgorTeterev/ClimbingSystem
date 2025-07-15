@@ -7,6 +7,20 @@
 #include "Components/CapsuleComponent.h"
 #include "ClimbingSystem/DebugHelper.h"
 
+void UCustomMovementComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    OwningPlayerAnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+
+    if (OwningPlayerAnimInstance)
+    {
+        OwningPlayerAnimInstance->OnMontageEnded.AddDynamic(this,&UCustomMovementComponent::OnClimbMontageEnded);
+        OwningPlayerAnimInstance->OnMontageBlendingOut.AddDynamic(this, &UCustomMovementComponent::OnClimbMontageEnded);
+    }
+
+}
+
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -155,6 +169,23 @@ bool UCustomMovementComponent::IsClimbing() const
     return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::Move_Climb;
 }
 
+void UCustomMovementComponent::PlayClimbMontage(UAnimMontage* MontageToPlay)
+{
+    StartClimbing();
+
+    if (MontageToPlay && OwningPlayerAnimInstance && !OwningPlayerAnimInstance->IsAnyMontagePlaying())
+    {
+        OwningPlayerAnimInstance->Montage_Play(MontageToPlay);
+    }
+}
+
+void UCustomMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+    if (Montage == IdleToClimbMontage)
+    {
+        StartClimbing();
+    }
+}
 
 void UCustomMovementComponent::PhysCustom(float DeltaTime, int32 Iterations)
 {
@@ -189,7 +220,6 @@ float UCustomMovementComponent::GetMaxAcceleration() const
         return Super::GetMaxAcceleration();
     }
 }
-
 
 void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations)
 {
@@ -310,7 +340,7 @@ void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)
     {
         if (CanStartClimbing())
         {
-            StartClimbing();
+            PlayClimbMontage(IdleToClimbMontage);
         }
     }
     else

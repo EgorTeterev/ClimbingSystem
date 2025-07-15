@@ -6,6 +6,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomMovementComponent.generated.h"
 
+class UAnimaMontage;
+class UAnimInstance;
+
 UENUM(BlueprintType)
 namespace ECustomMovementMode
 {
@@ -45,27 +48,36 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float MaxClimbSpeed = 100.f;
 
-
 	//Trace Querry types of surfaces 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> SurfaceTraceTypes;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* IdleToClimbMontage;
+
+	UPROPERTY()
+	UAnimInstance* OwningPlayerAnimInstance;
+
+
 	//Traced Surfaces container
 	TArray<FHitResult> ClimbableSurfaces;
-
-
 	FVector CurrentClimableSurfaceLocation;
 	FVector CurrentClimableSurfaceNormal;
 
 
 	//Overriden CharacterMovementComponent interface
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
 
+	UFUNCTION()
+	void PlayClimbMontage(UAnimMontage* MontageToPlay);
 
+	UFUNCTION()
+	void OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 private:
 	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false,bool bDrawPersistentShape = false);
 	FHitResult DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug = false, bool bDrawPersistentShape = false);
@@ -77,7 +89,6 @@ private:
 	FQuat GetClimbRotation(float DeltaTime);
 	void SnapMovementToClimableSurfaces(float DeltaTime);
 	bool ShouldStopClimbing() const;
-
 public:
 	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
 
