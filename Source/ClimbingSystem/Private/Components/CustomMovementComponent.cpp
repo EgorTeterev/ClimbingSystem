@@ -4,6 +4,7 @@
 #include "Components/CustomMovementComponent.h"
 #include "ClimbingSystem/ClimbingSystemCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "ClimbingSystem/DebugHelper.h"
 
@@ -309,8 +310,6 @@ void UCustomMovementComponent::SnapMovementToClimableSurfaces(float DeltaTime)
     const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
 
     const FVector ProjectCharacterToSurface = (CurrentClimableSurfaceLocation - ComponentLocation).ProjectOnTo(ConmponentForward);
-    DrawDebugLine(GetWorld(), ComponentLocation, ProjectCharacterToSurface, FColor::Purple, true);
-
     const FVector SnapVector = -CurrentClimableSurfaceNormal * ProjectCharacterToSurface.Length();
 
     UpdatedComponent->MoveComponent(SnapVector * DeltaTime * MaxClimbSpeed,UpdatedComponent->GetComponentQuat(),true);
@@ -332,6 +331,11 @@ bool UCustomMovementComponent::ShouldStopClimbing() const
     }
 
     return false;
+}
+
+FVector UCustomMovementComponent::GetUnrotatedClimbVelocity() const
+{
+    return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(),Velocity);
 }
 
 void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)

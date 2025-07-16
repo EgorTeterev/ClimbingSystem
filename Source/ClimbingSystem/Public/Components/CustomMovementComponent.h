@@ -91,6 +91,6 @@ private:
 	bool ShouldStopClimbing() const;
 public:
 	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
-
+	FVector GetUnrotatedClimbVelocity() const;
 	
 };
