@@ -30,7 +30,8 @@ public:
 	FHitResult TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f);
 	void ToggleClimb(bool bEnableClimb);
 	bool IsClimbing() const;
-
+	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
+	FVector GetUnrotatedClimbVelocity() const;
 protected:
 	//Traces params
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
@@ -89,8 +90,7 @@ private:
 	FQuat GetClimbRotation(float DeltaTime);
 	void SnapMovementToClimableSurfaces(float DeltaTime);
 	bool ShouldStopClimbing() const;
-public:
-	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
-	FVector GetUnrotatedClimbVelocity() const;
+	bool CheckHasReachedFloor();
+
 	
 };

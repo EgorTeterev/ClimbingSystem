@@ -25,6 +25,7 @@ void UCustomMovementComponent::BeginPlay()
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
     //TraceClimbableSurfaces();
     //TraceFromEyeHeight(100.f);
     //SnapMovementToClimableSurfaces(DeltaTime);
@@ -234,7 +235,7 @@ void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations
     ProcessClimableSurfaceInfo();
 
     //Chack if we should stop Climbing
-    if (ShouldStopClimbing())
+    if (ShouldStopClimbing() || CheckHasReachedFloor())
     {
         StopClimbing();
     }
@@ -328,6 +329,34 @@ bool UCustomMovementComponent::ShouldStopClimbing() const
     if (DegreeDifference < 30.f)
     {
         return true;
+    }
+
+    return false;
+}
+
+bool UCustomMovementComponent::CheckHasReachedFloor()
+{
+    const FVector DownVector = -(UpdatedComponent->GetUpVector());
+    const FVector StartOffset = DownVector * 50.0f;
+
+    const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
+    const FVector End = Start + DownVector;
+
+    TArray<FHitResult> Floors = DoCapsuleTraceMultiByObject(Start, End, true);
+
+    if (!Floors.IsEmpty())
+    {
+        for (const FHitResult& PossibleFloor : Floors)
+        {
+         const bool bClimberReachedFloor = FVector::Parallel(-PossibleFloor.ImpactNormal, FVector::UpVector) && GetUnrotatedClimbVelocity().Z < -10.f;
+
+         if (bClimberReachedFloor)
+         {
+             return true;
+         }
+        }
+
+        return false;
     }
 
     return false;
