@@ -199,30 +199,6 @@ void UCustomMovementComponent::PhysCustom(float DeltaTime, int32 Iterations)
     Super::PhysCustom(DeltaTime, Iterations);
 }
 
-float UCustomMovementComponent::GetMaxSpeed() const
-{
-    if (IsClimbing())
-    {
-        return MaxClimbSpeed;
-    }
-    else
-    {
-        return Super::GetMaxSpeed();
-    }
-}
-
-float UCustomMovementComponent::GetMaxAcceleration() const
-{
-    if (IsClimbing())
-    {
-        return MaxClimbAcceleration;
-    }
-    else
-    {
-        return Super::GetMaxAcceleration();
-    }
-}
-
 void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations)
 {
     if (DeltaTime < MIN_TICK_TIME)
@@ -245,7 +221,7 @@ void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations
     if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
     {
         //Define max Climb speed and acceleration
-        CalcVelocity(DeltaTime, 0.f, true, GetMaxBrakingDeceleration());
+        CalcVelocity(DeltaTime, 0.f, true, MaxBreakClimbDeceleration);
     }
 
     ApplyRootMotionToVelocity(DeltaTime);
@@ -271,6 +247,30 @@ void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations
     //Snap movement to climable surfaces
     SnapMovementToClimableSurfaces(DeltaTime);
 
+}
+
+float UCustomMovementComponent::GetMaxSpeed() const
+{
+    if (IsClimbing())
+    {
+        return MaxClimbSpeed;
+    }
+    else
+    {
+        return Super::GetMaxSpeed();
+    }
+}
+
+float UCustomMovementComponent::GetMaxAcceleration() const
+{
+    if (IsClimbing())
+    {
+        return MaxClimbAcceleration;
+    }
+    else
+    {
+        return Super::GetMaxAcceleration();
+    }
 }
 
 void UCustomMovementComponent::ProcessClimableSurfaceInfo()
