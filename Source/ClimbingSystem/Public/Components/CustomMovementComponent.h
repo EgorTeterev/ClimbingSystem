@@ -91,6 +91,6 @@ private:
 	void SnapMovementToClimableSurfaces(float DeltaTime);
 	bool ShouldStopClimbing() const;
 	bool CheckHasReachedFloor();
-
+	bool CheckHasReachedLedge();
 	
 };
