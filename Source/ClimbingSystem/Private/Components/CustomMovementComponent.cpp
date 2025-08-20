@@ -51,7 +51,7 @@ FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, flo
     const FVector Start = ComponentLocation + EyeHeightOffset;
     const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance; 
     
-    return DoLineTraceSingleByObject(Start, End,true);
+    return DoLineTraceSingleByObject(Start, End);
 }
 
 //private trace functions
@@ -186,6 +186,10 @@ void UCustomMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool b
     if (Montage == IdleToClimbMontage)
     {
         StartClimbing();
+    } 
+    else
+    {
+        SetMovementMode(MOVE_Walking);
     }
 }
 
@@ -249,7 +253,7 @@ void UCustomMovementComponent::HandleClimbPhys(float DeltaTime, int32 Iterations
 
     if (CheckHasReachedLedge())
     {
-        Debug::Print(TEXT("Ledge detected"));
+        PlayClimbMontage(ClimbToTopMontage);
     }
 }
 
@@ -376,7 +380,7 @@ bool UCustomMovementComponent::CheckHasReachedLedge()
         const FVector DownVector = -UpdatedComponent->GetUpVector();
         const FVector WalkableSurfaceTraceEnd = WalkableSurfaceTraceStart + DownVector * 100.0f;
         
-        FHitResult WalkableSurfaceHitResult = DoLineTraceSingleByObject(WalkableSurfaceTraceStart, WalkableSurfaceTraceEnd, true);
+        FHitResult WalkableSurfaceHitResult = DoLineTraceSingleByObject(WalkableSurfaceTraceStart, WalkableSurfaceTraceEnd);
         
         if (WalkableSurfaceHitResult.bBlockingHit && GetUnrotatedClimbVelocity().Z > 10.0f) // character should move up
         {
@@ -386,8 +390,6 @@ bool UCustomMovementComponent::CheckHasReachedLedge()
 
     return false;
 }
-
-
 
 FVector UCustomMovementComponent::GetUnrotatedClimbVelocity() const
 {
@@ -409,4 +411,16 @@ void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)
     }
 }
 
+FVector UCustomMovementComponent::ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const
+{
+    const bool bIsPlayingAnyMontages = IsFalling() && OwningPlayerAnimInstance && OwningPlayerAnimInstance->IsAnyMontagePlaying();
 
+    if (bIsPlayingAnyMontages)
+    {
+        return RootMotionVelocity;
+    }
+    else
+    {
+        return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity, CurrentVelocity);
+    }
+}

@@ -56,6 +56,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* IdleToClimbMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ClimbToTopMontage;
+
 	UPROPERTY()
 	UAnimInstance* OwningPlayerAnimInstance;
 
@@ -73,6 +76,7 @@ protected:
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
+	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
 
 	UFUNCTION()
 	void PlayClimbMontage(UAnimMontage* MontageToPlay);
