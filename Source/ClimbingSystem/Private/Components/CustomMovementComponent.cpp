@@ -440,6 +440,10 @@ void UCustomMovementComponent::ToggleClimb(bool bEnableClimb)
         {
             PlayClimbMontage(DropToLedgeMontage);
         }
+        else
+        {
+            TryStartVaulting();
+        }
     }
     else
     {
@@ -459,4 +463,59 @@ FVector UCustomMovementComponent::ConstrainAnimRootMotionVelocity(const FVector&
     {
         return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity, CurrentVelocity);
     }
+}
+
+void UCustomMovementComponent::TryStartVaulting()
+{
+    FVector Start;
+    FVector End;
+
+    if (CanStartVaulting(Start,End))
+    {
+        Debug::Print(TEXT("Start position: ") + Start.ToCompactString());
+        Debug::Print(TEXT("End position: ") + End.ToCompactString());
+
+    }
+}
+
+bool UCustomMovementComponent::CanStartVaulting(FVector& VaultStartPosition, FVector& VaultLandPosition)
+{
+    if (!IsFalling())
+    {
+        VaultStartPosition = FVector::ZeroVector;
+        VaultLandPosition = FVector::ZeroVector;
+        const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
+        const FVector ComponentForward = UpdatedComponent->GetForwardVector();
+        const FVector UpVector = UpdatedComponent->GetUpVector();
+        const FVector DownVector = -UpdatedComponent->GetUpVector();
+
+        for (int32 i = 0; i < 5; i++ )
+        {
+            const FVector Start = ComponentLocation + UpVector * 100.0f + ComponentForward * 100.0f * (i+1);
+            const FVector End = Start + DownVector * 100.0f * (i + 1);
+
+            FHitResult VaultTraceHit= DoLineTraceSingleByObject(Start, End, true, true);
+
+            if (i == 0 && VaultTraceHit.bBlockingHit)
+            {
+                VaultStartPosition = VaultTraceHit.ImpactPoint;
+            }
+            if (i == 4 && VaultTraceHit.bBlockingHit)
+            {
+                VaultLandPosition = VaultTraceHit.ImpactPoint;
+            }
+        }
+
+        if (VaultStartPosition != FVector::ZeroVector && VaultLandPosition != FVector::ZeroVector)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+
+    return false;
 }

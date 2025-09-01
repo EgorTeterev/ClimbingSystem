@@ -86,6 +86,9 @@ protected:
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
 	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
+	
+	void TryStartVaulting();
+	bool CanStartVaulting(FVector& VaultStartPosition,FVector& VaultLandPosition);
 
 	UFUNCTION()
 	void PlayClimbMontage(UAnimMontage* MontageToPlay);
