@@ -8,6 +8,7 @@
 
 class UAnimaMontage;
 class UAnimInstance;
+class AClimbingSystemCharacter;
 
 UENUM(BlueprintType)
 namespace ECustomMovementMode
@@ -68,9 +69,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DropToLedgeMontage;
 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* VaultMontage;
+
 	UPROPERTY()
 	UAnimInstance* OwningPlayerAnimInstance;
 
+
+	UPROPERTY()
+	AClimbingSystemCharacter* OwningPlayerCharacter;
 
 	//Traced Surfaces container
 	TArray<FHitResult> ClimbableSurfaces;
@@ -95,6 +103,7 @@ protected:
 
 	UFUNCTION()
 	void OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void SetMontageWarpTarget(const FName& WarpTargetName, const FVector& TargetPosition);
 private:
 	TArray<FHitResult> DoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End, bool bShowDebug = false,bool bDrawPersistentShape = false);
 	FHitResult DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug = false, bool bDrawPersistentShape = false);
