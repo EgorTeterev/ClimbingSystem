@@ -10,6 +10,9 @@ class UAnimaMontage;
 class UAnimInstance;
 class AClimbingSystemCharacter;
 
+DECLARE_DELEGATE(FOnEnterClimbState)
+DECLARE_DELEGATE(FOnExitClimbState)
+
 UENUM(BlueprintType)
 namespace ECustomMovementMode
 {
@@ -33,6 +36,10 @@ public:
 	bool IsClimbing() const;
 	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
 	FVector GetUnrotatedClimbVelocity() const;
+
+	FOnEnterClimbState OnEnterClimbStateDelegate;
+	FOnExitClimbState OnExitClimbStateDelegate;
+
 protected:
 	//Traces params
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Character movement: Climbing", meta = (AllowPrivateAccess = "true"))

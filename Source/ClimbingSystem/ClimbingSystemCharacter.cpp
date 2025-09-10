@@ -65,15 +65,20 @@ AClimbingSystemCharacter::AClimbingSystemCharacter(const FObjectInitializer& Obj
 void AClimbingSystemCharacter::NotifyControllerChanged()
 {
 	Super::NotifyControllerChanged();
+}
 
-	// Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+void AClimbingSystemCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AddInputMappingContext(DefaultMappingContext,0);
+
+	if (CustomMovementComponent)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
+		CustomMovementComponent->OnEnterClimbStateDelegate.BindUObject(this, &AClimbingSystemCharacter::OnPlayerEnterClimbState);
+		CustomMovementComponent->OnExitClimbStateDelegate.BindUObject(this, &AClimbingSystemCharacter::OnPlayerExitClimbState);
 	}
+
 }
 
 void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -86,7 +91,9 @@ void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* Player
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AClimbingSystemCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AClimbingSystemCharacter::HandleGroundMovement);
+		EnhancedInputComponent->BindAction(ClimbMoveAction, ETriggerEvent::Triggered, this, &AClimbingSystemCharacter::HandleClimbMovement);
+
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AClimbingSystemCharacter::Look);
@@ -99,25 +106,6 @@ void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* Player
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
-}
-
-void AClimbingSystemCharacter::Move(const FInputActionValue& Value)
-{
-
-	if (!CustomMovementComponent)
-	{
-		return;
-	}
-
-	if (CustomMovementComponent->IsClimbing())
-	{
-		HandleClimbMovement(Value);
-	}
-	else
-	{
-		HandleGroundMovement(Value);
-	}
-
 }
 
 void AClimbingSystemCharacter::HandleGroundMovement(const FInputActionValue& Value)
@@ -182,7 +170,42 @@ void AClimbingSystemCharacter::OnClimbActionStarted(const FInputActionValue& Val
 	{
 		CustomMC->ToggleClimb(false); //cancel Climbing
 	}
-
-
 }
 
+void AClimbingSystemCharacter::OnPlayerEnterClimbState()
+{
+	AddInputMappingContext(ClimbMappingContext,1);
+}
+
+void AClimbingSystemCharacter::OnPlayerExitClimbState()
+{
+	RemoveInputMappingContext(ClimbMappingContext);
+}
+
+void AClimbingSystemCharacter::AddInputMappingContext(UInputMappingContext* ContextToAdd, int32 Priority)
+{
+	if (ContextToAdd)
+	{
+		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->AddMappingContext(ContextToAdd, Priority);
+			}
+		}
+	}
+}
+
+void AClimbingSystemCharacter::RemoveInputMappingContext(UInputMappingContext* ContextToRemove)
+{
+	if (ContextToRemove)
+	{
+		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->RemoveMappingContext(ContextToRemove);
+			}
+		}
+	}
+}
