@@ -67,14 +67,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* ClimbLookAction;
-
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ClimbAction;
 
-	void OnClimbActionStarted(const FInputActionValue& Value);
 	void OnPlayerEnterClimbState();
 	void OnPlayerExitClimbState();
 
@@ -85,6 +81,8 @@ protected:
 
 	void HandleGroundMovement(const FInputActionValue& Value);
 	void HandleClimbMovement(const FInputActionValue& Value);
+	void OnClimbActionStarted(const FInputActionValue& Value);
+	void OnClimbHopActionStarted(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);

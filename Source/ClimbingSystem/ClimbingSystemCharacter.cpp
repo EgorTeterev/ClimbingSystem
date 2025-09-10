@@ -100,6 +100,7 @@ void AClimbingSystemCharacter::SetupPlayerInputComponent(UInputComponent* Player
 		
 		// Start Climbing
 		EnhancedInputComponent->BindAction(ClimbAction, ETriggerEvent::Started, this, &AClimbingSystemCharacter::OnClimbActionStarted);
+		EnhancedInputComponent->BindAction(ClimbHopAction, ETriggerEvent::Started, this, &AClimbingSystemCharacter::OnClimbHopActionStarted);
 
 	}
 	else
@@ -208,4 +209,9 @@ void AClimbingSystemCharacter::RemoveInputMappingContext(UInputMappingContext* C
 			}
 		}
 	}
+}
+
+void AClimbingSystemCharacter::OnClimbHopActionStarted(const FInputActionValue& Value)
+{
+
 }
