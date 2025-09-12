@@ -42,7 +42,7 @@ bool UCustomMovementComponent::TraceClimbableSurfaces()
     return !ClimbableSurfaces.IsEmpty();
 }
 
-FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f, bool bShowDebug, bool bDrawPersistentShape)
+FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset, bool bShowDebug, bool bDrawPersistentShape)
 {
     const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
     const FVector EyeHeightOffset = UpdatedComponent->GetUpVector() * (CharacterOwner->BaseEyeHeight + TraceStartOffset);
