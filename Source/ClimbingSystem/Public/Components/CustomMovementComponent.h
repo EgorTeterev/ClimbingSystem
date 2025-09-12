@@ -31,11 +31,12 @@ class CLIMBINGSYSTEM_API UCustomMovementComponent : public UCharacterMovementCom
 public:
 //interface for Climbing
 	bool TraceClimbableSurfaces();
-	FHitResult TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f);
+	FHitResult TraceFromEyeHeight(float TraceDistance,float TraceStartOffset = 0.f, bool bShowDebug = false, bool bDrawPersistentShape = false);
 	void ToggleClimb(bool bEnableClimb);
 	bool IsClimbing() const;
 	FORCEINLINE FVector GetClimableSurfaceNormal() const { return CurrentClimableSurfaceNormal; }
 	FVector GetUnrotatedClimbVelocity() const;
+	void RequestHopping();
 
 	FOnEnterClimbState OnEnterClimbStateDelegate;
 	FOnExitClimbState OnExitClimbStateDelegate;
@@ -125,5 +126,6 @@ private:
 	bool CheckHasReachedFloor();
 	bool CheckHasReachedLedge();
 	bool CanClimbDownLedge();
-	
+	void HandleHopUp();
+	bool CheckCanHopUp();
 };

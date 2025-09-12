@@ -213,5 +213,8 @@ void AClimbingSystemCharacter::RemoveInputMappingContext(UInputMappingContext* C
 
 void AClimbingSystemCharacter::OnClimbHopActionStarted(const FInputActionValue& Value)
 {
-
+	if (CustomMovementComponent)
+	{
+		CustomMovementComponent->RequestHopping();
+	}
 }

@@ -27,7 +27,7 @@ void UCustomMovementComponent::BeginPlay()
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    CanClimbDownLedge();
+    CheckCanHopUp();
 }
 
 //public functions to use
@@ -42,15 +42,15 @@ bool UCustomMovementComponent::TraceClimbableSurfaces()
     return !ClimbableSurfaces.IsEmpty();
 }
 
-FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset)
+FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f, bool bShowDebug, bool bDrawPersistentShape)
 {
     const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
     const FVector EyeHeightOffset = UpdatedComponent->GetUpVector() * (CharacterOwner->BaseEyeHeight + TraceStartOffset);
     
     const FVector Start = ComponentLocation + EyeHeightOffset;
     const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance; 
-    
-    return DoLineTraceSingleByObject(Start, End);
+
+    return DoLineTraceSingleByObject(Start, End, bShowDebug, bDrawPersistentShape);
 }
 
 //private trace functions
@@ -433,6 +433,31 @@ bool UCustomMovementComponent::CanClimbDownLedge()
     return false;
 }
 
+void UCustomMovementComponent::HandleHopUp()
+{
+    if (CheckCanHopUp())
+    {
+        Debug::Print(TEXT("Can hop up"));
+    }
+    else
+    {
+        Debug::Print(TEXT("Can nothing"));
+    }
+}
+
+bool UCustomMovementComponent::CheckCanHopUp()
+{
+    FHitResult HopUpHit = TraceFromEyeHeight(100.0f,-30.0f,true);
+    FHitResult SaftyLedgeHitResult = TraceFromEyeHeight(150.0f, 150.0f, true);
+
+    if (HopUpHit.bBlockingHit && SaftyLedgeHitResult.bBlockingHit)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 FVector UCustomMovementComponent::GetUnrotatedClimbVelocity() const
 {
     return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(),Velocity);
@@ -530,4 +555,24 @@ bool UCustomMovementComponent::CanStartVaulting(FVector& VaultStartPosition, FVe
     }
 
     return false;
+}
+
+void UCustomMovementComponent::RequestHopping()
+{
+    const FVector UnrotatedVector = UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(),GetLastInputVector());
+
+    const float DotResult = FVector::DotProduct(UnrotatedVector.GetSafeNormal(), FVector::UpVector);
+
+    if (DotResult >= 0.9f)
+    {
+        HandleHopUp();
+    }
+    else if (DotResult <= 0.9f)
+    {
+
+    }
+    else
+    {
+
+    }
 }
