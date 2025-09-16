@@ -27,7 +27,6 @@ void UCustomMovementComponent::BeginPlay()
 void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    CheckCanHopUp();
 }
 
 //public functions to use
@@ -147,7 +146,6 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
         const FRotator DirtyRotation = UpdatedComponent->GetComponentRotation();
         const FRotator CleanStandRotation = FRotator(0.0f, DirtyRotation.Yaw, 0.f);
         UpdatedComponent->SetRelativeRotation(CleanStandRotation);
-        // 
 
         StopMovementImmediately();
         OnExitClimbStateDelegate.ExecuteIfBound();
@@ -435,23 +433,22 @@ bool UCustomMovementComponent::CanClimbDownLedge()
 
 void UCustomMovementComponent::HandleHopUp()
 {
-    if (CheckCanHopUp())
+    FVector HopUpTargetPosition;
+    if (CheckCanHopUp(HopUpTargetPosition))
     {
-        Debug::Print(TEXT("Can hop up"));
-    }
-    else
-    {
-        Debug::Print(TEXT("Can nothing"));
+        SetMontageWarpTarget(FName("HopUpTargetPosition"), HopUpTargetPosition);
+        PlayClimbMontage(HopUpMontage);
     }
 }
 
-bool UCustomMovementComponent::CheckCanHopUp()
+bool UCustomMovementComponent::CheckCanHopUp(FVector& HopUpTargetPosition)
 {
     FHitResult HopUpHit = TraceFromEyeHeight(100.0f,-30.0f,true);
     FHitResult SaftyLedgeHitResult = TraceFromEyeHeight(150.0f, 150.0f, true);
 
     if (HopUpHit.bBlockingHit && SaftyLedgeHitResult.bBlockingHit)
     {
+        HopUpTargetPosition = HopUpHit.ImpactPoint;
         return true;
     }
 

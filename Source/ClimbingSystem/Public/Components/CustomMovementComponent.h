@@ -77,6 +77,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DropToLedgeMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HopUpMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* VaultMontage;
@@ -127,5 +129,5 @@ private:
 	bool CheckHasReachedLedge();
 	bool CanClimbDownLedge();
 	void HandleHopUp();
-	bool CheckCanHopUp();
+	bool CheckCanHopUp(FVector& HopUpTargetPosition);
 };
