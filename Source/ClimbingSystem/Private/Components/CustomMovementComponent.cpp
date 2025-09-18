@@ -472,6 +472,7 @@ bool UCustomMovementComponent::CheckCanHopDown(FVector& HopDownTargetPosition)
 
     if (HopDownHit.bBlockingHit)
     {
+        HopDownTargetPosition = HopDownHit.ImpactPoint;
         return true;
     }
     return false;
@@ -547,7 +548,7 @@ bool UCustomMovementComponent::CanStartVaulting(FVector& VaultStartPosition, FVe
 
         for (int32 i = 0; i < 5; i++ )
         {
-            const FVector Start = ComponentLocation + UpVector * 100.0f + ComponentForward * 100.0f * (i+1);
+            const FVector Start = ComponentLocation + UpVector * 100.0f + ComponentForward * 80.0f * (i+1);
             const FVector End = Start + DownVector * 100.0f * (i + 1);
 
             FHitResult VaultTraceHit= DoLineTraceSingleByObject(Start, End);
@@ -586,7 +587,7 @@ void UCustomMovementComponent::RequestHopping()
     {
         HandleHopUp();
     }
-    else if (DotResult <= 0.9f)
+    else if (DotResult <= -0.9f)
     {
         HandleDropDown();
     }
