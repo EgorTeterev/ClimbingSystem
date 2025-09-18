@@ -443,8 +443,8 @@ void UCustomMovementComponent::HandleHopUp()
 
 bool UCustomMovementComponent::CheckCanHopUp(FVector& HopUpTargetPosition)
 {
-    FHitResult HopUpHit = TraceFromEyeHeight(100.0f,-30.0f,true);
-    FHitResult SaftyLedgeHitResult = TraceFromEyeHeight(150.0f, 150.0f, true);
+    FHitResult HopUpHit = TraceFromEyeHeight(100.0f,-20.0f);
+    FHitResult SaftyLedgeHitResult = TraceFromEyeHeight(150.0f, 150.0f);
 
     if (HopUpHit.bBlockingHit && SaftyLedgeHitResult.bBlockingHit)
     {
@@ -452,6 +452,28 @@ bool UCustomMovementComponent::CheckCanHopUp(FVector& HopUpTargetPosition)
         return true;
     }
 
+    return false;
+}
+
+void UCustomMovementComponent::HandleDropDown()
+{
+    FVector HopDropDownTargetPosition;
+
+    if (CheckCanHopDown(HopDropDownTargetPosition))
+    {
+        SetMontageWarpTarget(FName("HopDropDownTargetPosition"), HopDropDownTargetPosition);
+        PlayClimbMontage(HopDropDownMontage);
+    }
+}
+
+bool UCustomMovementComponent::CheckCanHopDown(FVector& HopDownTargetPosition)
+{
+    FHitResult HopDownHit = TraceFromEyeHeight(100.0f, -300.0f);
+
+    if (HopDownHit.bBlockingHit)
+    {
+        return true;
+    }
     return false;
 }
 
@@ -566,10 +588,6 @@ void UCustomMovementComponent::RequestHopping()
     }
     else if (DotResult <= 0.9f)
     {
-
-    }
-    else
-    {
-
+        HandleDropDown();
     }
 }
